@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import shutil
 import time
+from collections.abc import Callable
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -46,6 +47,7 @@ def run_scenario(
     start: date,
     seed: int,
     cfg: AdviseConfig = HARNESS_ADVISE,
+    progress: Callable[[str, int, int], None] | None = None,
 ) -> list[DayRecord]:
     registry = Registry.load(registry_dir)
     plant = TruthPlant(registry, seed=seed, scenario=Scenario.load(scenario), start=start)
@@ -99,6 +101,8 @@ def run_scenario(
         )
         writer.write_day(results["advisor"], plant)
         previous = results["advisor"].end_rates
+        if progress is not None:
+            progress(scenario, offset, days)
     _write_records(out_dir / scenario / "days.csv", records)
     return records
 
@@ -111,10 +115,20 @@ def _write_records(path: Path, records: list[DayRecord]) -> None:
         writer.writerows(rows)
 
 
-def run_harness(registry_dir: Path, out_dir: Path, *, scenarios: list[str], days: int, start: date, seed: int) -> str:
+def run_harness(
+    registry_dir: Path,
+    out_dir: Path,
+    *,
+    scenarios: list[str],
+    days: int,
+    start: date,
+    seed: int,
+    progress: Callable[[str, int, int], None] | None = None,
+) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
     by_scenario = {
-        name: run_scenario(registry_dir, out_dir, name, days=days, start=start, seed=seed) for name in scenarios
+        name: run_scenario(registry_dir, out_dir, name, days=days, start=start, seed=seed, progress=progress)
+        for name in scenarios
     }
     summary = summary_markdown(by_scenario)
     (out_dir / "summary.md").write_text(summary)

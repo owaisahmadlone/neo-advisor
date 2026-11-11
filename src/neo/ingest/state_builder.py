@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
 
-from neo.calibrate.pipes import fit_friction
+from neo.calibrate.pipes import PipeFit, fit_friction
 from neo.calibrate.reconcile import Balance, reconcile
-from neo.calibrate.wells import STALE_TEST_DAYS, calibrate_well
+from neo.calibrate.wells import STALE_TEST_DAYS, WellCalibration, calibrate_well
 from neo.core.units import barg_to_bara
 from neo.domain.registry import Network
 from neo.domain.state import DataFlag, NetworkState, OperatingPoint, WellState
@@ -47,6 +48,24 @@ def _active(
     return events.loc[mask]
 
 
+@dataclass(slots=True)
+class BuildTrace:
+    """Everything ingest and calibration looked at and decided, for inspection (UI, audits)."""
+
+    cutoff: pd.Timestamp
+    day_start: pd.Timestamp
+    day_end: pd.Timestamp
+    readings: dict[str, TagReading] = field(default_factory=dict)
+    calibrations: dict[str, WellCalibration] = field(default_factory=dict)
+    raw_rates: dict[str, float] = field(default_factory=dict)
+    route_gaps: dict[str, dict[str, float]] = field(default_factory=dict)
+    hub_meter: float | None = None
+    hub_wells: list[str] = field(default_factory=list)
+    third_party_total: float = 0.0
+    pipe_fits: dict[str, tuple[PipeFit, tuple[np.ndarray, np.ndarray, np.ndarray]]] = field(default_factory=dict)
+    capacity_events: pd.DataFrame = field(default_factory=pd.DataFrame)
+
+
 class _StateBuilder:
     def __init__(self, zone: LandingZone, gas_day: date, revision: int, cfg: GateConfig) -> None:
         self.zone = zone
@@ -59,11 +78,13 @@ class _StateBuilder:
         start, end = self.net.calendar.bounds_utc(gas_day)
         self.day_start, self.day_end = pd.Timestamp(start), pd.Timestamp(end)
         self.flags: list[DataFlag] = []
+        self.trace = BuildTrace(self.cutoff, self.day_start, self.day_end)
 
     def build(self) -> NetworkState:
         history = self.zone.historian(self.cutoff - timedelta(days=CALIBRATION_DAYS), self.cutoff)
         self.readings = read_all(history, self.cutoff, self.cfg, digital=self.zone.digital_tags)
         self.flags += gate(self.readings, self.zone.critical_tags, self.cutoff, self.cfg)
+        self.trace.readings = self.readings
         self.wide = (
             history.loc[(history["quality"] == "Good") & history["value"].notna()]
             .pivot_table(index="ts_utc", columns="tag", values="value", aggfunc="mean")
@@ -121,6 +142,8 @@ class _StateBuilder:
                     DataFlag("substituted", well.id, "rate estimate missing; using calibrated curve", "info")
                 )
             available = well.id not in failed
+            self.trace.calibrations[well.id] = cal
+            self.trace.raw_rates[well.id] = vfm if online and available else 0.0
             out[well.id] = WellState(
                 well_id=well.id,
                 available=available,
@@ -142,12 +165,14 @@ class _StateBuilder:
             measured = _pressure(self.readings, schema.NETWORK_TAGS["manifold_pressure"].format(node=platform.manifold))
             flow = sum(wells[w.id].rate_mmscfd for w in self.net.wells_on(platform.id))
             best, best_gap = options[0], float("inf")
+            gaps = self.trace.route_gaps.setdefault(platform.id, {})
             for pipe_id in options:
                 pipe = self.net.pipe_by_id[pipe_id]
                 downstream = _pressure(self.readings, f"{pipe.to_node}.PRESS")
                 if measured is None or downstream is None:
                     continue
                 gap = abs(pipe.hydraulics.inlet_pressure(downstream, flow) - measured)
+                gaps[pipe_id] = gap
                 if gap < best_gap:
                     best, best_gap = pipe_id, gap
             routes[platform.id] = best
@@ -167,6 +192,7 @@ class _StateBuilder:
         estimates = {w: s.rate_mmscfd for w, s in wells.items()}
         sigmas = {w: max(VFM_SIGMA_REL * s.rate_mmscfd, 0.05) for w, s in wells.items()}
         reconciled = reconcile(estimates, sigmas, [Balance("hub_inlet", hub_wells, hub_meter - third)])
+        self.trace.hub_meter, self.trace.hub_wells, self.trace.third_party_total = hub_meter, hub_wells, third
         return {w: _with_rate(s, reconciled[w]) for w, s in wells.items()}
 
     # ---------------------------------------------------------------- network
@@ -179,6 +205,7 @@ class _StateBuilder:
                 fitted[pipe.id] = prior
                 continue
             fit = fit_friction(prior, *series)
+            self.trace.pipe_fits[pipe.id] = (fit, series)
             if fit.clipped:
                 self.flags.append(DataFlag("pipe_fit_clipped", pipe.id, "friction fit outside expected band"))
             fitted[pipe.id] = fit.hydraulics
@@ -215,6 +242,7 @@ class _StateBuilder:
             self.zone.events, ("train_trip", "train_maintenance"), self.cutoff, self.day_end, cutoff=self.cutoff
         )
         down = round(events["capacity_removed"].astype(float).sum()) if not events.empty else 0
+        self.trace.capacity_events = pd.concat([self.trace.capacity_events, events])
         available = max(comp.trains - down, 0)
         running = 0
         for n in range(1, comp.trains + 1):
@@ -234,6 +262,7 @@ class _StateBuilder:
         events = self.zone.events
         co2 = _active(events, ("co2_removal_derate",), self.cutoff, self.day_end, cutoff=self.cutoff)
         inlet = _active(events, ("plant_derate",), self.cutoff, self.day_end, cutoff=self.cutoff)
+        self.trace.capacity_events = pd.concat([self.trace.capacity_events, co2, inlet])
         co2_removed = float(co2["capacity_removed"].astype(float).sum()) if not co2.empty else 0.0
         inlet_removed = float(inlet["capacity_removed"].astype(float).sum()) if not inlet.empty else 0.0
         return max(plant.co2_removal_cap_mmscfd - co2_removed, 0.0), max(plant.inlet_cap_mmscfd - inlet_removed, 0.0)
@@ -296,3 +325,11 @@ def _with_rate(state: WellState, rate: float) -> WellState:
 
 def build_state(zone: LandingZone, gas_day: date, *, revision: int = 0, cfg: GateConfig | None = None) -> NetworkState:
     return _StateBuilder(zone, gas_day, revision, cfg or GateConfig()).build()
+
+
+def build_state_traced(
+    zone: LandingZone, gas_day: date, *, revision: int = 0, cfg: GateConfig | None = None
+) -> tuple[NetworkState, BuildTrace]:
+    builder = _StateBuilder(zone, gas_day, revision, cfg or GateConfig())
+    state = builder.build()
+    return state, builder.trace

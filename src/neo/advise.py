@@ -30,6 +30,7 @@ from neo.domain.advisory import (
 )
 from neo.domain.registry import Registry
 from neo.domain.state import NetworkState
+from neo.explain.labels import describe_violation, limit_label, row_kind_label
 from neo.explain.merit import MeritOrder, merit_order
 from neo.opt.build import ModelConfig
 from neo.opt.solve import PlanNumbers, PlanSolution, solve_gas_day
@@ -55,6 +56,8 @@ class AdviceBundle:
     merit: MeritOrder | None = None
     plan: PlanNumbers | None = None
     plan_outcome: Outcome | None = None
+    baseline_outcome: Outcome | None = None
+    solution: PlanSolution | None = None
 
 
 def advisor_physics(
@@ -242,16 +245,21 @@ def advise(
     manifest["solve_attempts"] = attempts
     if not solution.ok:
         rows = solution.infeasibility.rows if solution.infeasibility else ()
+        kinds = sorted({kind for _, kind, _ in rows})
         reasons = [
-            StatusReason(code="infeasible", message=f"limit cannot hold: {name}", subject=kind)
-            for name, kind, _ in rows
+            StatusReason(
+                code="infeasible",
+                message=f"{row_kind_label(kind)} cannot be met together with the other limits on today's data",
+            )
+            for kind in kinds
         ]
-        reasons = reasons or [StatusReason(code="solve_failed", message=solution.status)]
+        reasons = reasons or [StatusReason(code="solve_failed", message="no plan could be computed from today's data")]
         manifest["status"] = f"blocked: {solution.status}"
         return AdviceBundle(blocked_advisory(registry, state, run_id, reasons, supersedes=supersedes), manifest, [])
     if outcome.hard_violations:
         reasons = [
-            StatusReason(code="verification_failed", message=str(v), subject=v.subject) for v in outcome.hard_violations
+            StatusReason(code="verification_failed", message=describe_violation(v), subject=v.subject)
+            for v in outcome.hard_violations
         ]
         manifest["status"] = "blocked: verification failed"
         return AdviceBundle(blocked_advisory(registry, state, run_id, reasons, supersedes=supersedes), manifest, [])
@@ -297,7 +305,7 @@ def advise(
         for a in advisory.allocations
     ]
     manifest["status"] = advisory.status
-    return AdviceBundle(advisory, manifest, draft, merit, plan, outcome)
+    return AdviceBundle(advisory, manifest, draft, merit, plan, outcome, baseline_outcome, solution)
 
 
 def _assemble(
@@ -411,7 +419,8 @@ def _assemble(
     if held:
         reasons.append(
             StatusReason(
-                code="hold_breaches_limits", message="holding current settings would breach: " + ", ".join(held)
+                code="hold_breaches_limits",
+                message="holding current settings would breach: " + ", ".join(limit_label(h) for h in held),
             )
         )
     status = "ready_with_flags" if reasons or state.flags else "ready"
@@ -471,7 +480,7 @@ def _status_reasons(state: NetworkState, plan: PlanNumbers, value: Valuation, ou
         reasons.append(StatusReason(code="unsold_gas", message=f"{value.unsold_mmbtu:,.0f} MMBtu/d has no outlet"))
     for v in outcome.violations:
         if v.severity == "warning" and v.limit != "move_limit":
-            reasons.append(StatusReason(code=v.limit, message=str(v), subject=v.subject))
+            reasons.append(StatusReason(code=v.limit, message=describe_violation(v), subject=v.subject))
     return reasons
 
 

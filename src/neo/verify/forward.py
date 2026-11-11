@@ -86,6 +86,31 @@ class Violation:
 
 
 @dataclass(frozen=True, slots=True)
+class Check:
+    """One limit the verifier evaluated, whether or not it held."""
+
+    limit: str
+    subject: str
+    value: float
+    bound: float
+    upper: bool
+    severity: Literal["hard", "warning"]
+    ok: bool
+
+    @property
+    def margin(self) -> float:
+        """Distance to the limit in the limit's own units; negative means breached."""
+        return self.bound - self.value if self.upper else self.value - self.bound
+
+    @property
+    def utilisation(self) -> float:
+        """Fraction of the limit used (upper limits) or of the floor cleared (lower limits)."""
+        if self.upper:
+            return self.value / self.bound if self.bound else float("inf")
+        return self.bound / self.value if self.value else float("inf")
+
+
+@dataclass(frozen=True, slots=True)
 class WellOutcome:
     rate: float
     manifold_bara: float
@@ -115,6 +140,7 @@ class Outcome:
     our_condensate_by_well: Mapping[str, float]
     water: float
     violations: tuple[Violation, ...] = field(default_factory=tuple)
+    checks: tuple[Check, ...] = field(default_factory=tuple)
 
     @property
     def hard_violations(self) -> tuple[Violation, ...]:
@@ -252,11 +278,13 @@ def _assemble(
     comp, plant, spec = net.compressor, net.plant, net.plant.spec
     pressures, arc_flow = state["pressures"], state["arc_flow"]
     violations: list[Violation] = []
+    checks: list[Check] = []
 
     def check(
         limit: str, subject: str, value: float, bound: float, *, upper: bool = True, severity: str = "hard"
     ) -> None:
         breached = value > bound * (1 + 1e-6) + TOL if upper else value < bound * (1 - 1e-6) - TOL
+        checks.append(Check(limit, subject, value, bound, upper, severity, not breached))
         if breached:
             violations.append(Violation(limit, subject, value, bound, severity))
 
@@ -372,6 +400,7 @@ def _assemble(
         our_condensate_by_well=our_cond,
         water=water,
         violations=tuple(violations),
+        checks=tuple(checks),
     )
 
 

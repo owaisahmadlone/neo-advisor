@@ -95,3 +95,12 @@ def test_reconciliation_meets_the_meter_exactly():
     assert out["a"] + out["b"] == pytest.approx(33.0)
     assert out["c"] == 5.0
     assert (out["b"] - 20.0) == pytest.approx(4 * (out["a"] - 10.0))  # adjustment proportional to variance
+
+
+def test_blocked_advisory_messages_are_plain_language(registry, state):
+    broken = state.with_overrides(plant_inlet_cap_mmscfd=10.0)
+    advisory = advise(registry, broken, cfg=FAST).advisory
+    assert advisory.status == "blocked"
+    for reason in advisory.status_reasons:
+        assert "[" not in reason.message and " vs " not in reason.message, reason.message
+        assert reason.code in ("infeasible", "solve_failed")

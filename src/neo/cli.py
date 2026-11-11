@@ -68,6 +68,16 @@ def _schema(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ui(args: argparse.Namespace) -> int:
+    import subprocess
+
+    app = Path(__file__).resolve().parent / "ui" / "app.py"
+    command = [sys.executable, "-m", "streamlit", "run", str(app), "--server.port", str(args.port)]
+    if args.headless:
+        command += ["--server.headless", "true"]
+    return subprocess.call(command)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="neo", description="NeO v1 gas network optimisation advisor")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -100,6 +110,11 @@ def build_parser() -> argparse.ArgumentParser:
     harness.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
     harness.add_argument("--out", type=Path, default=Path("data/harness"))
     harness.set_defaults(func=_harness)
+
+    ui = sub.add_parser("ui", help="open the explainer UI (needs the ui extra: uv run --extra ui neo ui)")
+    ui.add_argument("--port", type=int, default=8501)
+    ui.add_argument("--headless", action="store_true", help="don't open a browser")
+    ui.set_defaults(func=_ui)
 
     schema = sub.add_parser("schema", help="export JSON Schemas of the output contracts")
     schema.add_argument("--out", type=Path, default=Path("schemas"))

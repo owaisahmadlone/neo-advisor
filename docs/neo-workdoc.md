@@ -51,6 +51,8 @@ uv run pytest
 | Calibration | `calibrate/` | well C from the latest accepted test (p_ws from survey + decline); trunk K fitted from 14 days of historian data; WLS reconciliation of VFM rates to the hub meter | n and the liquid-head term stay at their priors | Narasimhan & Jordache 2000 |
 | Outputs | `domain/advisory.py`, `publish/`, `explain/text.py` | `advisory.json` (versioned, JSON Schema), report, nomination draft, decision-log schema, internal run manifest | — | — |
 | Synthetic plant | `synth/` | truth parameters away from the registry, two unmodelled effects, sensor noise, events, extracts | — | Bikmukhametov & Jäschke 2020 (error bands) |
+| Explainer UI (internal) | `ui/` | Streamlit + Plotly, 7 pages: start/tour, network and physics, inputs, gate and calibration, advisory (what-if lab + landing-zone data; set-points, network map, merit-order breakdown, binding limits, value waterfall, contracts and quality, compressor map, every verifier check with its margin, solver stages, artefacts, run-to-run comparison), evaluation (run live or load; daily charts; drill into any day), dictionary. Run: `uv run --extra ui neo ui` | internal only (explains the method); one user at a time; runs locally | — |
+| Data dictionary | `ui/dictionary.py` | one source of meaning/unit/source/use for every input column, tag, register field, state field, output field, code and term; feeds the UI's hover help; `tests/test_dictionary.py` fails if anything in the code is undocumented | — | — |
 | Harness | `harness/` | closed loop: truth → extracts → advisor → operator → truth; hold and greedy baselines replayed on the same true day; the same protection rule for every policy; scenarios normal, trip, co2cut, badtag | the operator accepts 100% in one step and guards on daily outcomes | Elgsæter et al. 2010 (what fraction of potential is realised) |
 
 ## 3. Data model as built
@@ -100,6 +102,8 @@ uv run pytest
 | 2026-11-12 | Digital tags (uom "bool") are exempt from the stuck-sensor rule | train RUN and well STATUS legitimately hold one value for days; the rule blocked every run | one rule for all tags | synth agent's integration run |
 | 2026-11-12 | Unplanned events (trips, well failures) count only once started before the cut-off; planned ones may be known ahead | otherwise an open-loop landing zone leaks future trips into earlier plans | use every event in the file | synth agent's integration run |
 | 2026-11-12 | The "hold" comparison in the advisory uses the plant's response (respond mode), and flags when holding would breach a limit | on a trip day, holding valued an overloaded plan as if it delivered | check-mode valuation of the baseline | trip-day report |
+| 2026-11-12 | Explainer UI in Streamlit, inside the repo, labelled internal | it must run the real solver and harness, so it can't be a static page; Python-native keeps it maintainable by the same team; it shows internals (duals, back-offs, stages), so it must not reach clients | static artefact page; separate React front end | CLAUDE.md "never expose internals" |
+| 2026-11-12 | One data dictionary, with a coverage test derived from source (regex over codes, model fields, schema tuples) | "explain everything without miss" has to be checkable, not a promise | hand-written help text per page | — |
 | 2026-11-12 | The harness gives every policy the same protection rule (choke in its own order until plant limits hold and all gas has a buyer) | the comparison is fair only if the baselines get the same control-room behaviour | guard for the advisor only | — |
 
 ## 5. Results log
@@ -173,6 +177,13 @@ See the decision log.
 | Harness operator realism: intraday feedback on the plant CO2 analyser, partial acceptance, ramp limits | harness | the guard acts on daily outcomes, not within the day | SPE 145723 | before quoting harness numbers to the client | M |
 | Suppress the HiGHS banner on stdout | cli | the banner prints once per process | — | when the CLI is wrapped by a scheduler | S |
 | Choke-back order per binding limit (CO2 order ≠ compression order) | explain | one order today, by unit value | — | a client day with two different binding limits | S |
+| Client-safe UI view (advisory pages only, no internals) | ui | the explainer is internal; a client demo needs a trimmed variant | CLAUDE.md rule | a client demo is scheduled | M |
+| Hosted internal UI with sign-in and multi-user state | ui | it runs locally, one user at a time | — | more than ~3 regular users | M |
+| Read `prices.csv` per gas day (condensate, LNG netback) instead of the registry prices | ingest/opt | the extract is written but never read; prices are fixed in the registry | dictionary audit | before any client run | S |
+| Use lab samples to refresh well compositions (CO2, H2S, Hg, GHV) | calibrate | compositions come only from the registry | dictionary audit | first client lab data | S |
+| Apply `pipe_restriction` events to pipe capacity | ingest | the event type is in the contract but has no effect | dictionary audit | first restriction in client events | S |
+| Use the plant-inlet CO2 analyser (`GPP.CO2_IN`) to cross-check the modelled blend, or make it non-critical | ingest | it can block a run although its value is unused | dictionary audit | now: a decision for the client's tag owners | S |
+| Model H2S and mercury removal capacity explicitly | opt | sales H2S/Hg limits are applied at the plant inlet (removal ignored), which is conservative | dictionary audit | when H2S/Hg ever binds | S |
 
 ## 7. Open questions for the client
 - Do calibrated GAP/IPM/iCON network models exist? What does PrO compute today? (PETRONAS published an LP of the Peninsular fields in 2008.)
