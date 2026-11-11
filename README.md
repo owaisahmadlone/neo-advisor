@@ -25,8 +25,8 @@ uv run neo schema --out schemas
 ## Explainer UI (internal)
 
 ```bash
-uv sync --extra ui
-uv run --extra ui neo ui
+uv sync
+uv run neo ui
 ```
 
 The UI opens at http://localhost:8501. Its pages, in order:

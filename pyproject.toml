@@ -20,15 +20,13 @@ dependencies = [
 [project.scripts]
 neo = "neo.cli:main"
 
-[project.optional-dependencies]
-ui = [
-    "plotly>=7.1.0",
-    "streamlit>=1.67.0",
-]
-
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+# The explainer UI ships with every `uv sync` (and Streamlit Cloud's uv-sync); it stays out of the package's runtime deps.
+default-groups = ["dev", "ui"]
 
 [tool.uv.build-backend]
 module-name = "neo"
@@ -50,6 +48,10 @@ dev = [
     "hypothesis>=6.170.15",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
+]
+ui = [
+    "plotly>=7.1.0",
+    "streamlit>=1.67.0",
 ]
 
 [tool.ruff.lint.per-file-ignores]

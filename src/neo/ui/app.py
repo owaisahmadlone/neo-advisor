@@ -1,4 +1,4 @@
-"""NeO explainer UI. Run with ``uv run --extra ui neo ui`` (or ``streamlit run streamlit_app.py``)."""
+"""NeO explainer UI. Run with ``uv run neo ui`` (or ``streamlit run streamlit_app.py``)."""
 
 from __future__ import annotations
 

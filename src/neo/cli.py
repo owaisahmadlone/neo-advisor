@@ -111,7 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     harness.add_argument("--out", type=Path, default=Path("data/harness"))
     harness.set_defaults(func=_harness)
 
-    ui = sub.add_parser("ui", help="open the explainer UI (needs the ui extra: uv run --extra ui neo ui)")
+    ui = sub.add_parser("ui", help="open the explainer UI (installed by the default `ui` dependency group)")
     ui.add_argument("--port", type=int, default=8501)
     ui.add_argument("--headless", action="store_true", help="don't open a browser")
     ui.set_defaults(func=_ui)
