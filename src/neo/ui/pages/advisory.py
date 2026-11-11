@@ -185,29 +185,29 @@ def _summary(bundle: AdviceBundle) -> None:
     short = sum(c.shortfall_mmbtu_d for c in a.allocations)
     m = st.columns(5)
     m[0].metric(
-        "Plan value",
-        money(plan) + "/d",
+        "Plan value (USD/d)",
+        f"${plan / 1e6:.2f}M",
         money(delta, signed=True) + " vs holding",
         help="Enterprise value of the plan: gas sales + condensate − partners' share − operating cost.",
     )
     if a.plan_value_usd_d:
         m[1].metric(
-            "P10 – P90 value",
-            f"{a.plan_value_usd_d.p10_usd_d / 1e6:.2f}–{a.plan_value_usd_d.p90_usd_d / 1e6:.2f} M$",
+            "P10–P90 (USD/d)",
+            f"{a.plan_value_usd_d.p10_usd_d / 1e6:.2f}–{a.plan_value_usd_d.p90_usd_d / 1e6:.2f}M",
             help="Range if wells deliver more or less than calibrated (Monte Carlo on well uncertainty).",
         )
     m[2].metric(
-        "Shortfall vs nominations",
-        f"{short:,.0f} MMBtu/d",
+        "Shortfall (MMBtu/d)",
+        f"{short / 1000:,.1f}k" if short >= 1000 else f"{short:,.0f}",
         help="Gas buyers asked for that the network cannot deliver today.",
     )
     m[3].metric(
-        "Marginal gas value",
-        f"${a.marginal_gas_value_usd_mmbtu:.2f}/MMBtu",
+        "Gas value at margin ($/MMBtu)",
+        f"${a.marginal_gas_value_usd_mmbtu:.2f}",
         help="What one more MMBtu of sales gas would earn today: the price of the last buyer served.",
     )
     m[4].metric(
-        "Hub suction set-point", f"{a.network.suction_setpoint_bara:.1f} bara", f"{a.network.trains_online} trains"
+        "Hub suction (bara)", f"{a.network.suction_setpoint_bara:.1f}", f"{a.network.trains_online} trains online"
     )
     moves = [w for w in a.wells if w.action not in ("maintain", "unavailable")]
     top = ", ".join(b.label for b in a.binding_constraints[:3]) or "none"
