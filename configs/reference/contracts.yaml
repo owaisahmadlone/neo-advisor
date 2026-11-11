@@ -1,0 +1,26 @@
+# Synthetic reference data for NeO v1. Values sit inside researched ranges; items marked in
+# docs/neo-workdoc.md as assumptions must be confirmed with the client.
+condensate_usd_bbl: 70.0
+contracts:
+- id: GSA-B1
+  buyer: Buyer 1 (power)
+  kind: gsa
+  price_usd_mmbtu: 7.5
+  priority: 1
+  dcq_mmbtu_d: 250000
+  mdq_mmbtu_d: 275000
+  shortfall_usd_mmbtu: 2.0
+- id: GSA-B2
+  buyer: Buyer 2 (industrial)
+  kind: gsa
+  price_usd_mmbtu: 6.8
+  priority: 2
+  dcq_mmbtu_d: 110000
+  mdq_mmbtu_d: 121000
+  shortfall_usd_mmbtu: 1.5
+- id: POS-LNG
+  buyer: LNG diversion (priority of supply)
+  kind: excess
+  price_usd_mmbtu: 8.2
+  priority: 3
+  cap_mmbtu_d: 40000

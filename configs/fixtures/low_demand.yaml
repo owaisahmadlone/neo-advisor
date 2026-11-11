@@ -1,0 +1,5 @@
+# Buyers nominate well below DCQ: the network is demand-limited.
+gas_day: 2026-11-13
+nomination_fraction:
+  GSA-B1: 0.8
+  GSA-B2: 0.6

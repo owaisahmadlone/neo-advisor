@@ -1,0 +1,47 @@
+[project]
+name = "neo-advisor"
+version = "0.1.0"
+description = "NeO v1: value-based well ranking and network optimisation advisor for a gas-condensate production network"
+readme = "README.md"
+authors = [
+    { name = "Owais-Landeed", email = "owaisahmadlone@landeed.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "highspy>=1.16.0",
+    "numpy>=2.5.4",
+    "pandas>=3.1.1",
+    "pyarrow>=26.0.1",
+    "pydantic>=2",
+    "pyyaml>=6.0.3",
+    "scipy>=1.18.1",
+]
+
+[project.scripts]
+neo = "neo.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "neo"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["src/networking_problem_statement"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.15",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]

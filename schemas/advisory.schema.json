@@ -1,0 +1,598 @@
+{
+  "$defs": {
+    "BindingConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "shadow_value": {
+          "title": "Shadow Value",
+          "type": "number"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "shadow_value",
+        "unit"
+      ],
+      "title": "BindingConstraint",
+      "type": "object"
+    },
+    "ContractAllocation": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_id": {
+          "title": "Contract Id",
+          "type": "string"
+        },
+        "buyer": {
+          "title": "Buyer",
+          "type": "string"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer"
+        },
+        "nominated_mmbtu_d": {
+          "title": "Nominated Mmbtu D",
+          "type": "number"
+        },
+        "planned_mmbtu_d": {
+          "title": "Planned Mmbtu D",
+          "type": "number"
+        },
+        "shortfall_mmbtu_d": {
+          "title": "Shortfall Mmbtu D",
+          "type": "number"
+        }
+      },
+      "required": [
+        "contract_id",
+        "buyer",
+        "priority",
+        "nominated_mmbtu_d",
+        "planned_mmbtu_d",
+        "shortfall_mmbtu_d"
+      ],
+      "title": "ContractAllocation",
+      "type": "object"
+    },
+    "ExcessAllocation": {
+      "additionalProperties": false,
+      "properties": {
+        "outlet_id": {
+          "title": "Outlet Id",
+          "type": "string"
+        },
+        "buyer": {
+          "title": "Buyer",
+          "type": "string"
+        },
+        "planned_mmbtu_d": {
+          "title": "Planned Mmbtu D",
+          "type": "number"
+        }
+      },
+      "required": [
+        "outlet_id",
+        "buyer",
+        "planned_mmbtu_d"
+      ],
+      "title": "ExcessAllocation",
+      "type": "object"
+    },
+    "NetworkAdvice": {
+      "additionalProperties": false,
+      "properties": {
+        "suction_setpoint_bara": {
+          "title": "Suction Setpoint Bara",
+          "type": "number"
+        },
+        "trains_online": {
+          "title": "Trains Online",
+          "type": "integer"
+        },
+        "trains_available": {
+          "title": "Trains Available",
+          "type": "integer"
+        },
+        "routes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Routes",
+          "type": "object"
+        },
+        "hub_inflow_mmscfd": {
+          "title": "Hub Inflow Mmscfd",
+          "type": "number"
+        },
+        "compression_ullage_mmscfd": {
+          "title": "Compression Ullage Mmscfd",
+          "type": "number"
+        },
+        "discharge_pressure_bara": {
+          "title": "Discharge Pressure Bara",
+          "type": "number"
+        },
+        "arrival_pressure_bara": {
+          "title": "Arrival Pressure Bara",
+          "type": "number"
+        }
+      },
+      "required": [
+        "suction_setpoint_bara",
+        "trains_online",
+        "trains_available",
+        "routes",
+        "hub_inflow_mmscfd",
+        "compression_ullage_mmscfd",
+        "discharge_pressure_bara",
+        "arrival_pressure_bara"
+      ],
+      "title": "NetworkAdvice",
+      "type": "object"
+    },
+    "SalesGas": {
+      "additionalProperties": false,
+      "properties": {
+        "volume_mmscfd": {
+          "title": "Volume Mmscfd",
+          "type": "number"
+        },
+        "ghv_btu_scf": {
+          "title": "Ghv Btu Scf",
+          "type": "number"
+        },
+        "co2_mol_pct": {
+          "title": "Co2 Mol Pct",
+          "type": "number"
+        },
+        "co2_removal_mmscfd": {
+          "title": "Co2 Removal Mmscfd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "volume_mmscfd",
+        "ghv_btu_scf",
+        "co2_mol_pct",
+        "co2_removal_mmscfd"
+      ],
+      "title": "SalesGas",
+      "type": "object"
+    },
+    "StatusReason": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "subject": {
+          "default": "",
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "StatusReason",
+      "type": "object"
+    },
+    "ValueLine": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "title": "Component",
+          "type": "string"
+        },
+        "plan_usd_d": {
+          "title": "Plan Usd D",
+          "type": "number"
+        },
+        "baseline_usd_d": {
+          "title": "Baseline Usd D",
+          "type": "number"
+        },
+        "delta_usd_d": {
+          "title": "Delta Usd D",
+          "type": "number"
+        }
+      },
+      "required": [
+        "component",
+        "plan_usd_d",
+        "baseline_usd_d",
+        "delta_usd_d"
+      ],
+      "title": "ValueLine",
+      "type": "object"
+    },
+    "ValueRange": {
+      "additionalProperties": false,
+      "properties": {
+        "p10_usd_d": {
+          "title": "P10 Usd D",
+          "type": "number"
+        },
+        "p50_usd_d": {
+          "title": "P50 Usd D",
+          "type": "number"
+        },
+        "p90_usd_d": {
+          "title": "P90 Usd D",
+          "type": "number"
+        }
+      },
+      "required": [
+        "p10_usd_d",
+        "p50_usd_d",
+        "p90_usd_d"
+      ],
+      "title": "ValueRange",
+      "type": "object"
+    },
+    "WellAdvice": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "title": "Item Id",
+          "type": "string"
+        },
+        "well_id": {
+          "title": "Well Id",
+          "type": "string"
+        },
+        "platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "increase",
+            "decrease",
+            "maintain",
+            "open",
+            "shut_in",
+            "unavailable"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "current_rate_mmscfd": {
+          "title": "Current Rate Mmscfd",
+          "type": "number"
+        },
+        "recommended_rate_mmscfd": {
+          "title": "Recommended Rate Mmscfd",
+          "type": "number"
+        },
+        "implied_choke_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Implied Choke Pct"
+        },
+        "wellhead_pressure_bara": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Wellhead Pressure Bara"
+        },
+        "rank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rank"
+        },
+        "merit_status": {
+          "title": "Merit Status",
+          "type": "string"
+        },
+        "unit_value_usd_per_mmscfd": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit Value Usd Per Mmscfd"
+        },
+        "total_contribution_usd_d": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Total Contribution Usd D"
+        },
+        "reasons": {
+          "items": {
+            "$ref": "#/$defs/WellReason"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "flags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "executing_role": {
+          "default": "PTOCC / FOM",
+          "title": "Executing Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_id",
+        "well_id",
+        "platform",
+        "action",
+        "current_rate_mmscfd",
+        "recommended_rate_mmscfd",
+        "implied_choke_pct",
+        "wellhead_pressure_bara",
+        "rank",
+        "merit_status",
+        "unit_value_usd_per_mmscfd",
+        "total_contribution_usd_d",
+        "reasons",
+        "confidence",
+        "flags"
+      ],
+      "title": "WellAdvice",
+      "type": "object"
+    },
+    "WellReason": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "usd_per_mmscfd": {
+          "title": "Usd Per Mmscfd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "usd_per_mmscfd"
+      ],
+      "title": "WellReason",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "supersedes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Supersedes"
+    },
+    "gas_day": {
+      "format": "date",
+      "title": "Gas Day",
+      "type": "string"
+    },
+    "valid_from_utc": {
+      "format": "date-time",
+      "title": "Valid From Utc",
+      "type": "string"
+    },
+    "valid_to_utc": {
+      "format": "date-time",
+      "title": "Valid To Utc",
+      "type": "string"
+    },
+    "snapshot_cutoff_utc": {
+      "format": "date-time",
+      "title": "Snapshot Cutoff Utc",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "ready_with_flags",
+        "blocked"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "status_reasons": {
+      "items": {
+        "$ref": "#/$defs/StatusReason"
+      },
+      "title": "Status Reasons",
+      "type": "array"
+    },
+    "wells": {
+      "items": {
+        "$ref": "#/$defs/WellAdvice"
+      },
+      "title": "Wells",
+      "type": "array"
+    },
+    "network": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NetworkAdvice"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sales_gas": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SalesGas"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "allocations": {
+      "items": {
+        "$ref": "#/$defs/ContractAllocation"
+      },
+      "title": "Allocations",
+      "type": "array"
+    },
+    "excess": {
+      "items": {
+        "$ref": "#/$defs/ExcessAllocation"
+      },
+      "title": "Excess",
+      "type": "array"
+    },
+    "value_waterfall": {
+      "items": {
+        "$ref": "#/$defs/ValueLine"
+      },
+      "title": "Value Waterfall",
+      "type": "array"
+    },
+    "plan_value_usd_d": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ValueRange"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "marginal_gas_value_usd_mmbtu": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Marginal Gas Value Usd Mmbtu"
+    },
+    "binding_constraints": {
+      "items": {
+        "$ref": "#/$defs/BindingConstraint"
+      },
+      "title": "Binding Constraints",
+      "type": "array"
+    },
+    "choke_back_order": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Choke Back Order",
+      "type": "array"
+    },
+    "data_flags": {
+      "items": {
+        "$ref": "#/$defs/StatusReason"
+      },
+      "title": "Data Flags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "revision",
+    "supersedes",
+    "gas_day",
+    "valid_from_utc",
+    "valid_to_utc",
+    "snapshot_cutoff_utc",
+    "status",
+    "status_reasons",
+    "wells",
+    "network",
+    "sales_gas",
+    "allocations",
+    "excess",
+    "value_waterfall",
+    "plan_value_usd_d",
+    "marginal_gas_value_usd_mmbtu",
+    "binding_constraints",
+    "data_flags"
+  ],
+  "title": "Advisory",
+  "type": "object"
+}

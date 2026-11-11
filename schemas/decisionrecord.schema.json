@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "description": "One planner decision on one advisory item (written by the review UI, not by NeO).",
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "item_id": {
+      "title": "Item Id",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "approve",
+        "edit",
+        "reject"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "user": {
+      "title": "User",
+      "type": "string"
+    },
+    "decided_utc": {
+      "format": "date-time",
+      "title": "Decided Utc",
+      "type": "string"
+    },
+    "edited_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Edited Value"
+    }
+  },
+  "required": [
+    "run_id",
+    "item_id",
+    "decision",
+    "reason_code",
+    "user",
+    "decided_utc"
+  ],
+  "title": "DecisionRecord",
+  "type": "object"
+}
